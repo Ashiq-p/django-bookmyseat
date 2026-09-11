@@ -1,0 +1,104 @@
+{% extends "users/basic.html" %}
+
+{% block title %}Manage Cast & Crew - Custom Admin | BookMySeat{% endblock %}
+
+{% block content %}
+<div class="py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="font-weight-bold mb-1"><i class="fas fa-user-friends text-info"></i> Manage Cast & Crew</h1>
+            <p class="text-muted">Add actors, actresses, directors, and crew members.</p>
+        </div>
+        <a href="{% url 'custom_admin_dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left mr-1"></i> Dashboard
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Add Cast Member Form -->
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm rounded-lg p-4 bg-white">
+                <h5 class="font-weight-bold mb-3"><i class="fas fa-user-plus text-info mr-1"></i> Add Cast Member</h5>
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold">Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" placeholder="e.g. Leonardo DiCaprio" required>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold">Role <span class="text-danger">*</span></label>
+                        <select name="role" class="form-control">
+                            <option value="Actor">Actor</option>
+                            <option value="Actress">Actress</option>
+                            <option value="Director">Director</option>
+                            <option value="Producer">Producer</option>
+                            <option value="Writer">Writer</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold">Photo</label>
+                        <input type="file" name="photo" class="form-control-file" accept="image/*">
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold">Biography</label>
+                        <textarea name="bio" class="form-control" rows="3" placeholder="Short biography..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-info btn-block font-weight-bold text-white">Save Cast Member</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Cast List Table -->
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm rounded-lg overflow-hidden bg-white">
+                <div class="card-body p-0">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Photo</th>
+                                <th>Name</th>
+                                <th>Role</th>
+                                <th class="text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cast in cast_members %}
+                            <tr>
+                                <td style="width: 60px;">
+                                    {% if cast.photo %}
+                                        <img src="{{ cast.photo.url }}" class="rounded-circle shadow-sm" style="width: 45px; height: 45px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                                            <i class="fas fa-user text-secondary"></i>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong class="h6 mb-0 d-block">{{ cast.name }}</strong>
+                                    {% if cast.bio %}<small class="text-muted text-truncate d-block" style="max-width: 250px;">{{ cast.bio }}</small>{% endif %}
+                                </td>
+                                <td><span class="badge badge-secondary">{{ cast.role }}</span></td>
+                                <td class="text-right">
+                                    <form method="POST" action="{% url 'delete_cast' cast.id %}" class="d-inline" onsubmit="return confirm('Delete {{ cast.name }}?')">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i> Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">No cast members added yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

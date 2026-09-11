@@ -1,0 +1,130 @@
+{% extends "users/basic.html" %}
+
+{% block title %}{% if movie %}Edit Movie - {{ movie.name }}{% else %}Add New Movie{% endif %} | Custom Admin{% endblock %}
+
+{% block content %}
+<div class="py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="font-weight-bold mb-1">
+                {% if movie %}<i class="fas fa-edit text-primary"></i> Edit Movie: {{ movie.name }}{% else %}<i class="fas fa-plus-circle text-success"></i> Add New Movie{% endif %}
+            </h1>
+            <p class="text-muted">Configure movie details, YouTube trailer, age rating, posters, and cast.</p>
+        </div>
+        <a href="{% url 'manage_movies' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left mr-1"></i> Back to Movie List
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-lg p-4 bg-white">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="row">
+                <!-- Main Movie Info -->
+                <div class="col-md-8">
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold">Movie Title <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control form-control-lg" value="{% if movie %}{{ movie.name }}{% endif %}" placeholder="e.g. Inception" required>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold">Detailed Description</label>
+                        <textarea name="description" class="form-control" rows="4" placeholder="Plot summary, synopsis, storyline...">{% if movie %}{{ movie.description }}{% endif %}</textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="font-weight-bold">Duration (Minutes) <span class="text-danger">*</span></label>
+                            <input type="number" name="duration" class="form-control" value="{% if movie %}{{ movie.duration }}{% else %}120{% endif %}" placeholder="120" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="font-weight-bold">Age Certification <span class="text-danger">*</span></label>
+                            <select name="age_certification" class="form-control" required>
+                                <option value="U" {% if movie and movie.age_certification == 'U' %}selected{% endif %}>U (Universal)</option>
+                                <option value="UA" {% if not movie or movie.age_certification == 'UA' %}selected{% endif %}>UA (Parental Guidance)</option>
+                                <option value="A" {% if movie and movie.age_certification == 'A' %}selected{% endif %}>A (Adults Only)</option>
+                                <option value="PG-13" {% if movie and movie.age_certification == 'PG-13' %}selected{% endif %}>PG-13</option>
+                                <option value="R" {% if movie and movie.age_certification == 'R' %}selected{% endif %}>R (Restricted)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold"><i class="fab fa-youtube text-danger mr-1"></i> YouTube Trailer Link / Embed URL</label>
+                        <input type="url" name="trailer_youtube_url" class="form-control" value="{% if movie %}{{ movie.trailer_youtube_url|default:'' }}{% endif %}" placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
+                        <small class="form-text text-muted">Paste any YouTube watch or embed URL. It will be securely formatted.</small>
+                    </div>
+
+                    <!-- Genres & Languages Selection -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="font-weight-bold">Genres</label>
+                            <select name="genres" class="form-control" multiple style="height: 120px;">
+                                {% for g in genres %}
+                                    <option value="{{ g.id }}" {% if movie and g in movie.genres.all %}selected{% endif %}>{{ g.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Hold Ctrl / Cmd to select multiple</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="font-weight-bold">Languages</label>
+                            <select name="languages" class="form-control" multiple style="height: 120px;">
+                                {% for l in languages %}
+                                    <option value="{{ l.id }}" {% if movie and l in movie.languages.all %}selected{% endif %}>{{ l.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Hold Ctrl / Cmd to select multiple</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold">Cast Members</label>
+                        <select name="cast_members" class="form-control" multiple style="height: 120px;">
+                            {% for c in cast_list %}
+                                <option value="{{ c.id }}" {% if movie and c in movie.cast_members.all %}selected{% endif %}>{{ c.name }} ({{ c.role }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Media Uploads & Status -->
+                <div class="col-md-4">
+                    <div class="card border bg-light p-3 mb-4">
+                        <h6 class="font-weight-bold mb-3"><i class="fas fa-image text-info mr-1"></i> Primary Poster Image</h6>
+                        {% if movie and movie.image %}
+                            <img src="{{ movie.image.url }}" class="img-fluid rounded mb-2 shadow-sm" style="max-height: 200px; object-fit: cover;">
+                        {% endif %}
+                        <input type="file" name="image" class="form-control-file" accept="image/*" {% if not movie %}required{% endif %}>
+                    </div>
+
+                    <div class="card border bg-light p-3 mb-4">
+                        <h6 class="font-weight-bold mb-3"><i class="fas fa-images text-primary mr-1"></i> Additional Poster Gallery</h6>
+                        {% if movie and movie.posters.exists %}
+                            <div class="d-flex flex-wrap gap-2 mb-2">
+                                {% for poster in movie.posters.all %}
+                                    <img src="{{ poster.image.url }}" class="rounded border" style="width: 50px; height: 60px; object-fit: cover;">
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <input type="file" name="extra_posters" class="form-control-file" accept="image/*" multiple>
+                        <small class="form-text text-muted">Upload multiple secondary poster images for gallery display.</small>
+                    </div>
+
+                    <div class="card border bg-light p-3 mb-4">
+                        <h6 class="font-weight-bold mb-3"><i class="fas fa-sliders-h text-warning mr-1"></i> Feature Options</h6>
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" name="is_trending" class="custom-control-input" id="trendingCheck" {% if movie and movie.is_trending %}checked{% endif %}>
+                            <label class="custom-control-label font-weight-bold" for="trendingCheck">Mark as Trending Movie</label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block btn-lg font-weight-bold shadow">
+                        <i class="fas fa-save mr-1"></i> Save Movie
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

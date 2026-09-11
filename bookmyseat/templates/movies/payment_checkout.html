@@ -1,0 +1,22 @@
+{% extends "users/basic.html" %}
+{% block content %}
+<div class="container py-5"><div class="card mx-auto shadow" style="max-width: 540px"><div class="card-body text-center">
+  <h3>Complete secure payment</h3>
+  <p>{{ payment.theater.movie.name }} · {{ payment.seat_ids|length }} seat{{ payment.seat_ids|length|pluralize }}</p>
+  <h4>₹{{ amount_rupees|floatformat:2 }}</h4>
+  <p class="text-muted">Your booking is confirmed only after Razorpay verifies a captured payment.</p>
+  <button id="pay-button" class="btn btn-success btn-lg">Pay securely with Razorpay</button>
+  <form method="post" action="{% url 'cancel_payment' payment.id %}" class="d-inline">{% csrf_token %}<button class="btn btn-link" type="submit">Cancel payment</button></form>
+  <a href="{% url 'book_seat' payment.theater.id %}" class="btn btn-link">Back to seats</a>
+</div></div></div>
+<form id="payment-result" method="post" action="{% url 'payment_callback' %}">{% csrf_token %}
+  <input type="hidden" name="razorpay_payment_id"><input type="hidden" name="razorpay_order_id"><input type="hidden" name="razorpay_signature">
+</form>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.getElementById('pay-button').onclick = function (event) {
+  event.preventDefault();
+  new Razorpay({key: '{{ razorpay_key_id|escapejs }}', amount: '{{ payment.amount }}', currency: '{{ payment.currency }}', name: 'BookMySeat', description: '{{ payment.theater.movie.name|escapejs }}', order_id: '{{ payment.razorpay_order_id }}', callback_url: '{% url "payment_callback" %}', prefill: {name: '{{ request.user.username|escapejs }}', email: '{{ request.user.email|escapejs }}'}, theme: {color: '#28a745'}}).open();
+};
+</script>
+{% endblock %}

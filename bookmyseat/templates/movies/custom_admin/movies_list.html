@@ -1,0 +1,99 @@
+{% extends "users/basic.html" %}
+
+{% block title %}Manage Movies - Custom Admin | BookMySeat{% endblock %}
+
+{% block content %}
+<div class="py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="font-weight-bold mb-1"><i class="fas fa-film text-primary"></i> Manage Movies</h1>
+            <p class="text-muted">Add, edit, or remove movies, YouTube trailers, age certification, and posters.</p>
+        </div>
+        <div>
+            <a href="{% url 'custom_admin_dashboard' %}" class="btn btn-outline-secondary mr-2">
+                <i class="fas fa-arrow-left mr-1"></i> Dashboard
+            </a>
+            <a href="{% url 'add_movie' %}" class="btn btn-primary font-weight-bold">
+                <i class="fas fa-plus mr-1"></i> Add New Movie
+            </a>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-lg overflow-hidden">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>Poster</th>
+                            <th>Title</th>
+                            <th>Rating</th>
+                            <th>Cert / Duration</th>
+                            <th>Genres</th>
+                            <th>Trending</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for movie in movies %}
+                        <tr>
+                            <td style="width: 70px;">
+                                {% if movie.image %}
+                                    <img src="{{ movie.image.url }}" class="rounded shadow-sm" alt="{{ movie.name }}" style="width: 50px; height: 60px; object-fit: cover;">
+                                {% else %}
+                                    <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center" style="width: 50px; height: 60px;">
+                                        <i class="fas fa-film"></i>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong class="h6 mb-0 d-block">{{ movie.name }}</strong>
+                                <small class="text-muted">Release: {{ movie.release_date|date:"M d, Y" }}</small>
+                            </td>
+                            <td>
+                                <span class="badge badge-success font-weight-bold"><i class="fas fa-star text-warning mr-1"></i>{{ movie.rating }}</span>
+                            </td>
+                            <td>
+                                <span class="badge badge-dark mr-1">{{ movie.age_certification }}</span>
+                                <small class="text-muted">{{ movie.duration_formatted }}</small>
+                            </td>
+                            <td>
+                                {% for g in movie.genres.all %}
+                                    <span class="badge badge-light border">{{ g.name }}</span>
+                                {% empty %}
+                                    <span class="text-muted small">None</span>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {% if movie.is_trending %}
+                                    <span class="badge badge-warning"><i class="fas fa-fire"></i> Yes</span>
+                                {% else %}
+                                    <span class="badge badge-light border">No</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-right">
+                                <a href="{% url 'movie_detail' movie.id %}" class="btn btn-sm btn-outline-info mr-1" target="_blank" title="View Detail">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'edit_movie' movie.id %}" class="btn btn-sm btn-outline-primary mr-1" title="Edit">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <a href="{% url 'delete_movie' movie.id %}" class="btn btn-sm btn-outline-danger" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                No movies added yet. <a href="{% url 'add_movie' %}">Add your first movie now</a>.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

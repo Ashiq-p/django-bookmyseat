@@ -1,0 +1,198 @@
+{% extends "users/basic.html" %}
+
+{% block title %}Admin Dashboard - Movie Management | BookMySeat{% endblock %}
+
+{% block content %}
+<div class="py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="font-weight-bold mb-1"><i class="fas fa-user-shield text-warning"></i> Admin Dashboard</h1>
+            <p class="text-muted">Manage movies, genres, languages, cast members, theaters, and moderate reviews.</p>
+        </div>
+        <div>
+            <a href="{% url 'add_movie' %}" class="btn btn-primary font-weight-bold shadow-sm">
+                <i class="fas fa-plus-circle mr-1"></i> Add Movie
+            </a>
+            <a href="/admin/" class="btn btn-outline-dark font-weight-bold ml-2 shadow-sm" target="_blank">
+                <i class="fas fa-cog mr-1"></i> Django Admin Panel
+            </a>
+        </div>
+    </div>
+
+    <!-- Overview Stat Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm rounded-lg bg-primary text-white p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase mb-1 opacity-80">Total Movies</h6>
+                        <h2 class="font-weight-bold mb-0">{{ total_movies }}</h2>
+                    </div>
+                    <i class="fas fa-film fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm rounded-lg bg-success text-white p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase mb-1 opacity-80">Total Bookings</h6>
+                        <h2 class="font-weight-bold mb-0">{{ total_bookings }}</h2>
+                    </div>
+                    <i class="fas fa-ticket-alt fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm rounded-lg bg-info text-white p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase mb-1 opacity-80">Total Reviews</h6>
+                        <h2 class="font-weight-bold mb-0">{{ total_reviews }}</h2>
+                    </div>
+                    <i class="fas fa-comments fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm rounded-lg {% if flagged_reviews_count > 0 %}bg-danger{% else %}bg-secondary{% endif %} text-white p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase mb-1 opacity-80">Flagged Reviews</h6>
+                        <h2 class="font-weight-bold mb-0">{{ flagged_reviews_count }}</h2>
+                    </div>
+                    <i class="fas fa-flag fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-lg mb-4 p-3">
+        <form method="get" class="form-row align-items-end">
+            <div class="form-group col-md-3 mb-2">
+                <label for="start_date">From</label>
+                <input id="start_date" name="start_date" type="date" class="form-control" value="{{ analytics_start|date:'Y-m-d' }}">
+            </div>
+            <div class="form-group col-md-3 mb-2">
+                <label for="end_date">To</label>
+                <input id="end_date" name="end_date" type="date" class="form-control" value="{{ analytics_end|date:'Y-m-d' }}">
+            </div>
+            <div class="form-group col-md-2 mb-2"><button class="btn btn-primary" type="submit"><i class="fas fa-filter mr-1"></i> Apply</button></div>
+            <div class="form-group col-md-4 mb-2 text-md-right">
+                <a class="btn btn-outline-success btn-sm" href="{% url 'export_analytics_csv' %}?report=revenue&amp;start_date={{ analytics_start|date:'Y-m-d' }}&amp;end_date={{ analytics_end|date:'Y-m-d' }}">Revenue CSV</a>
+                <a class="btn btn-outline-success btn-sm" href="{% url 'export_analytics_csv' %}?report=bookings&amp;start_date={{ analytics_start|date:'Y-m-d' }}&amp;end_date={{ analytics_end|date:'Y-m-d' }}">Bookings CSV</a>
+                <a class="btn btn-outline-success btn-sm" href="{% url 'export_analytics_csv' %}?report=movies&amp;start_date={{ analytics_start|date:'Y-m-d' }}&amp;end_date={{ analytics_end|date:'Y-m-d' }}">Movies CSV</a>
+                <a class="btn btn-outline-success btn-sm" href="{% url 'export_analytics_csv' %}?report=theaters&amp;start_date={{ analytics_start|date:'Y-m-d' }}&amp;end_date={{ analytics_end|date:'Y-m-d' }}">Theaters CSV</a>
+                <a class="btn btn-outline-success btn-sm" href="{% url 'export_analytics_csv' %}?report=users&amp;start_date={{ analytics_start|date:'Y-m-d' }}&amp;end_date={{ analytics_end|date:'Y-m-d' }}">Users CSV</a>
+            </div>
+        </form>
+        <small class="text-muted">Analytics range: {{ analytics_start }} to {{ analytics_end }}. Revenue is based on verified paid transactions.</small>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3"><div class="card border-0 shadow-sm bg-dark text-white p-3"><small>Selected revenue</small><h3 class="mb-0">₹{{ revenue_rupees|floatformat:2 }}</h3></div></div>
+        <div class="col-md-3 mb-3"><div class="card border-0 shadow-sm bg-success text-white p-3"><small>Today</small><h3 class="mb-0">₹{{ revenue_periods_rupees.daily|floatformat:2 }}</h3></div></div>
+        <div class="col-md-3 mb-3"><div class="card border-0 shadow-sm bg-info text-white p-3"><small>This week</small><h3 class="mb-0">₹{{ revenue_periods_rupees.weekly|floatformat:2 }}</h3></div></div>
+        <div class="col-md-3 mb-3"><div class="card border-0 shadow-sm bg-secondary text-white p-3"><small>This month / year</small><h3 class="mb-0">₹{{ revenue_periods_rupees.monthly|floatformat:2 }} / ₹{{ revenue_periods_rupees.yearly|floatformat:2 }}</h3></div></div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4"><div class="card border-0 shadow-sm h-100"><div class="card-header font-weight-bold">Booking trends</div><div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>Date</th><th>Bookings</th></tr></thead><tbody>{% for row in booking_trends %}<tr><td>{{ row.day }}</td><td>{{ row.bookings }}</td></tr>{% empty %}<tr><td colspan="2">No bookings in this range.</td></tr>{% endfor %}</tbody></table></div></div></div>
+        <div class="col-lg-6 mb-4"><div class="card border-0 shadow-sm h-100"><div class="card-header font-weight-bold">Cancellation, failure and refund statistics</div><div class="card-body"><p class="mb-2">Cancelled: <strong>{{ payment_stats.cancelled }}</strong></p><p class="mb-2">Failed: <strong>{{ payment_stats.failed }}</strong></p><p class="mb-2">Refunded: <strong>{{ payment_stats.refunded }}</strong></p><p class="mb-0">Refund amount: <strong>₹{{ refund_amount_rupees|floatformat:2 }}</strong></p></div></div></div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-lg-7 mb-4"><div class="card border-0 shadow-sm"><div class="card-header font-weight-bold">Theater occupancy</div><div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>Theater</th><th>Booked</th><th>Capacity</th><th>Occupancy</th></tr></thead><tbody>{% for theater in occupancy %}<tr><td>{{ theater.name }}</td><td>{{ theater.booked_seats }}</td><td>{{ theater.total_seats }}</td><td>{{ theater.occupancy_percentage }}%</td></tr>{% empty %}<tr><td colspan="4">No theaters found.</td></tr>{% endfor %}</tbody></table></div></div></div>
+        <div class="col-lg-5 mb-4"><div class="card border-0 shadow-sm h-100"><div class="card-header font-weight-bold">Peak booking hours</div><div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>Hour</th><th>Bookings</th></tr></thead><tbody>{% for row in peak_hours|slice:':8' %}<tr><td>{{ row.hour }}:00</td><td>{{ row.bookings }}</td></tr>{% empty %}<tr><td colspan="2">No bookings in this range.</td></tr>{% endfor %}</tbody></table></div></div></div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4 mb-4"><div class="card border-0 shadow-sm"><div class="card-header font-weight-bold">Most booked movies</div><ol class="mb-0 p-4">{% for row in top_movies %}<li>{{ row.movie__name }} <span class="float-right">{{ row.bookings }}</span></li>{% empty %}<li>No data.</li>{% endfor %}</ol></div></div>
+        <div class="col-md-4 mb-4"><div class="card border-0 shadow-sm"><div class="card-header font-weight-bold">Top-performing theaters</div><ol class="mb-0 p-4">{% for row in top_theaters %}<li>{{ row.theater__name }} <span class="float-right">{{ row.bookings }}</span></li>{% empty %}<li>No data.</li>{% endfor %}</ol></div></div>
+        <div class="col-md-4 mb-4"><div class="card border-0 shadow-sm"><div class="card-header font-weight-bold">User growth</div><div class="table-responsive"><table class="table table-sm mb-0"><tbody>{% for row in user_growth %}<tr><td>{{ row.day }}</td><td>{{ row.users }}</td></tr>{% empty %}<tr><td>No new users.</td></tr>{% endfor %}</tbody></table></div></div></div>
+    </div>
+
+    <!-- Action Shortcuts Navigation -->
+    <div class="card border-0 shadow-sm rounded-lg mb-5 bg-white p-3">
+        <div class="row text-center">
+            <div class="col-md-3 col-6 py-2 border-right">
+                <a href="{% url 'manage_movies' %}" class="text-dark font-weight-bold text-decoration-none">
+                    <i class="fas fa-film fa-2x text-primary mb-2 d-block"></i>
+                    Manage Movies
+                </a>
+            </div>
+            <div class="col-md-3 col-6 py-2 border-right">
+                <a href="{% url 'manage_genres' %}" class="text-dark font-weight-bold text-decoration-none">
+                    <i class="fas fa-tags fa-2x text-success mb-2 d-block"></i>
+                    Genres & Languages
+                </a>
+            </div>
+            <div class="col-md-3 col-6 py-2 border-right">
+                <a href="{% url 'manage_cast' %}" class="text-dark font-weight-bold text-decoration-none">
+                    <i class="fas fa-user-friends fa-2x text-info mb-2 d-block"></i>
+                    Cast & Crew
+                </a>
+            </div>
+            <div class="col-md-3 col-6 py-2">
+                <a href="{% url 'moderate_reviews' %}" class="text-dark font-weight-bold text-decoration-none">
+                    <i class="fas fa-shield-alt fa-2x text-danger mb-2 d-block"></i>
+                    Review Moderation {% if flagged_reviews_count > 0 %}<span class="badge badge-danger">{{ flagged_reviews_count }}</span>{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Moderation Alert Banner -->
+    {% if flagged_reviews_count > 0 %}
+    <div class="alert alert-danger shadow-sm rounded-lg d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h5 class="alert-heading font-weight-bold mb-1"><i class="fas fa-exclamation-circle mr-2"></i> Attention Required: Flagged Reviews</h5>
+            <p class="mb-0">There are <strong>{{ flagged_reviews_count }} review(s)</strong> flagged for inappropriate content awaiting moderation.</p>
+        </div>
+        <a href="{% url 'moderate_reviews' %}" class="btn btn-light text-danger font-weight-bold px-4">
+            Review Now <i class="fas fa-arrow-right ml-1"></i>
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Recent Bookings Table -->
+    <div class="card border-0 shadow-sm rounded-lg">
+        <div class="card-header bg-white font-weight-bold border-0 pt-4 px-4 pb-0">
+            <h5 class="font-weight-bold mb-0"><i class="fas fa-history text-secondary mr-2"></i> Recent Booking Activity</h5>
+        </div>
+        <div class="card-body p-4">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>User</th>
+                            <th>Movie</th>
+                            <th>Theater</th>
+                            <th>Seat</th>
+                            <th>Booked At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in recent_bookings %}
+                        <tr>
+                            <td class="font-weight-bold">{{ booking.user.username }}</td>
+                            <td><a href="{% url 'movie_detail' booking.movie.id %}">{{ booking.movie.name }}</a></td>
+                            <td>{{ booking.theater.name }}</td>
+                            <td><span class="badge badge-info">{{ booking.seat.seat_number }}</span></td>
+                            <td class="text-muted small">{{ booking.booked_at|date:"M d, Y H:i" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">No recent bookings.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

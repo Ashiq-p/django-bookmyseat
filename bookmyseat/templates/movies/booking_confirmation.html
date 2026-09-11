@@ -1,0 +1,16 @@
+{% extends "users/basic.html" %}
+{% block content %}
+<div class="container py-5">
+  <div class="card mx-auto shadow" style="max-width: 620px">
+    <div class="card-body text-center">
+      <div class="display-5 text-success mb-3">&#10003;</div>
+      <h2>Reservation confirmed</h2>
+      <p class="lead">Your seats for <strong>{{ movie.name }}</strong> are booked.</p>
+      <p class="text-muted">{{ theater.name }} &middot; {{ theater.time }}</p>
+      <p><strong>Selected seats:</strong> {% for seat in seats %}{{ seat.seat_number }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+      <a href="{% url 'movie_detail' movie.id %}" class="btn btn-primary">View movie</a>
+      <a href="{% url 'profile' %}" class="btn btn-outline-secondary">View bookings</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

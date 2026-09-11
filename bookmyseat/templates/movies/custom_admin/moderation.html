@@ -1,0 +1,76 @@
+{% extends "users/basic.html" %}
+
+{% block title %}Review Moderation - Custom Admin | BookMySeat{% endblock %}
+
+{% block content %}
+<div class="py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="font-weight-bold mb-1"><i class="fas fa-shield-alt text-danger"></i> Review Moderation</h1>
+            <p class="text-muted">Review community reports of inappropriate review content and take action.</p>
+        </div>
+        <a href="{% url 'custom_admin_dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left mr-1"></i> Dashboard
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-lg">
+        <div class="card-body p-4">
+            {% for review in flagged_reviews %}
+            <div class="card border border-danger rounded-lg mb-4 shadow-sm">
+                <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                    <span class="font-weight-bold"><i class="fas fa-flag mr-1"></i> Flagged Review for "{{ review.movie.name }}"</span>
+                    <small>Submitted by {{ review.user.username }} on {{ review.created_at|date:"M d, Y" }}</small>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-7">
+                            <h6 class="font-weight-bold text-dark mb-1">Review Text:</h6>
+                            <blockquote class="blockquote bg-light p-3 rounded font-italic border-left border-danger" style="font-size: 1rem;">
+                                "{{ review.comment }}"
+                            </blockquote>
+                            <p class="mb-0">
+                                <strong>Rating:</strong> <span class="text-warning font-weight-bold"><i class="fas fa-star"></i> {{ review.rating }} / 5</span>
+                                {% if review.is_verified_viewer %}
+                                    <span class="badge badge-success ml-2"><i class="fas fa-check-circle"></i> Verified Viewer</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-5 border-left">
+                            <h6 class="font-weight-bold text-danger mb-2"><i class="fas fa-exclamation-circle mr-1"></i> User Reports ({{ review.reports.count }}):</h6>
+                            <ul class="list-unstyled mb-3">
+                                {% for report in review.reports.all %}
+                                <li class="bg-light p-2 rounded mb-2 small">
+                                    <strong>{{ report.reporter.username }}:</strong> "{{ report.reason }}"
+                                    <span class="text-muted d-block font-italic">{{ report.created_at|date:"M d, H:i" }}</span>
+                                </li>
+                                {% empty %}
+                                <li class="text-muted small">No specific reasons provided.</li>
+                                {% endfor %}
+                            </ul>
+
+                            <form method="POST" class="d-flex gap-2">
+                                {% csrf_token %}
+                                <input type="hidden" name="review_id" value="{{ review.id }}">
+                                <button type="submit" name="action" value="dismiss" class="btn btn-outline-success btn-sm flex-fill mr-2">
+                                    <i class="fas fa-check mr-1"></i> Dismiss Flag
+                                </button>
+                                <button type="submit" name="action" value="delete" class="btn btn-danger btn-sm flex-fill" onclick="return confirm('Delete this review permanently?')">
+                                    <i class="fas fa-trash mr-1"></i> Delete Review
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-5">
+                <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                <h4 class="font-weight-bold text-dark mb-1">No Flagged Reviews</h4>
+                <p class="text-muted">All reviews are clean and clear of moderation flags!</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

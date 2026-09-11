@@ -1,0 +1,224 @@
+{% extends "users/basic.html" %} {% block content %}
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <!-- Movie and Theater Info -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <div
+            class="d-flex justify-content-between align-items-center flex-wrap"
+          >
+            <div>
+              <h4 class="card-title">{{ theater.movie.name }}</h4>
+              <p class="card-text text-muted">
+                {{ theater.name }} | {{ theater.time }}
+              </p>
+            </div>
+            <div class="mt-2 mt-sm-0">
+              <button class="btn btn-outline-primary me-2 mb-2 mb-sm-0">
+                2D
+              </button>
+              <button class="btn btn-outline-primary me-2 mb-2 mb-sm-0">
+                3D
+              </button>
+              <button class="btn btn-outline-primary mb-2 mb-sm-0">
+                IMAX 3D
+              </button>
+              <button class="btn btn-outline-primary mb-2 mb-sm-0">
+                {{seats|length}} Tickets
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seat Selection -->
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title text-center mb-4">Select Your Seats</h5>
+          <div class="screen">All eyes this way please!</div>
+
+          {% if error_message %}
+          <div class="alert alert-danger" role="alert">{{ error_message }}</div>
+          {% endif %}
+
+          {% if reservation_expires_at %}
+          <div class="alert alert-warning d-flex justify-content-between align-items-center" role="alert">
+            <span>Your selected seats are reserved. Complete payment before they are released.</span>
+            <strong id="reservation-countdown" data-expires-at="{{ reservation_expires_at|date:'c' }}">2:00</strong>
+          </div>
+          {% endif %}
+
+          <form method="POST">
+            {% csrf_token %}
+            <div class="d-flex justify-content-center flex-wrap mb-4">
+              {% for seat in seats %}
+              <div class="seat {% if seat.is_booked %}sold{% elif seat.id in other_reserved_seat_ids %}reserved{% endif %}">
+                {% if not seat.is_booked and seat.id not in other_reserved_seat_ids %}
+                <input
+                  type="checkbox"
+                  name="seats"
+                  value="{{ seat.id }}"
+                  class="seat-input"
+                  id="seat-{{ seat.id }}"
+                  {% if seat.id in reserved_seat_ids %}checked{% endif %}
+                />
+                <label
+                  for="seat-{{ seat.id }}"
+                  class="seat-label d-flex align-items-center justify-content-center"
+                  >{{ seat.seat_number }}</label
+                >
+                {% else %} {{ seat.seat_number }} {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+
+            <!-- Seat Legend -->
+            <div class="d-flex justify-content-center mb-4">
+              <div class="d-flex align-items-center me-4">
+                <div class="seat" style="background-color: white"></div>
+                <span class="ms-2">Available</span>
+              </div>
+              <div class="d-flex align-items-center me-4">
+                <div class="seat selected"></div>
+                <span class="ms-2">Your reservation</span>
+              </div>
+              <div class="d-flex align-items-center me-4">
+                <div class="seat reserved"></div>
+                <span class="ms-2">Reserved</span>
+              </div>
+              <div class="d-flex align-items-center">
+                <div class="seat sold"></div>
+                <span class="ms-2">Booked</span>
+              </div>
+            </div>
+
+            <!-- Book Button -->
+            <div class="text-center">
+              <button type="submit" name="action" value="reserve" class="btn btn-primary btn-lg">Reserve / Update Selection</button>
+              {% if reservation_expires_at %}
+              <button type="submit" formaction="{% url 'start_payment' theater.id %}" class="btn btn-success btn-lg">Proceed to Payment</button>
+              <button type="submit" name="action" value="cancel" class="btn btn-outline-secondary">Release Seats</button>
+              {% endif %}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+  }
+  .seat {
+    position: relative;
+    width: 30px;
+    height: 30px;
+    border: 1px solid #28a745;
+    margin: 3px;
+    text-align: center;
+    line-height: 30px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  .seat:hover {
+    background-color: #28a745;
+    color: white;
+  }
+  .seat.selected {
+    background-color: #28a745;
+    color: white;
+  }
+  .seat-input {
+    position: absolute;
+    opacity: 0;
+  }
+  .seat-label {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    cursor: pointer;
+  }
+  .seat-input:checked + .seat-label {
+    background-color: #28a745;
+    color: white;
+    border-radius: 4px;
+  }
+  .seat.sold {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+  .seat.reserved {
+    background-color: #ffc107;
+    border-color: #d39e00;
+    color: #212529;
+    cursor: not-allowed;
+  }
+  .screen {
+    margin: 20px 0;
+    background-color: #ccc;
+    height: 50px;
+    text-align: center;
+    line-height: 50px;
+    color: #666;
+  }
+  .footer {
+    background-color: #333;
+    color: #ccc;
+    padding: 20px 0;
+  }
+  .footer a {
+    color: #ccc;
+    text-decoration: none;
+  }
+  .footer a:hover {
+    text-decoration: underline;
+  }
+  .footer .col-md-2,
+  .footer .col-md-3 {
+    margin-bottom: 20px;
+  }
+  .footer .social-icons i {
+    font-size: 20px;
+    margin: 0 10px;
+  }
+</style>
+<script>
+  (() => {
+    const countdown = document.getElementById('reservation-countdown');
+    if (!countdown) return;
+    const expiresAt = new Date(countdown.dataset.expiresAt);
+    const refresh = () => {
+      const remaining = Math.max(0, Math.ceil((expiresAt - new Date()) / 1000));
+      countdown.textContent = `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`;
+      if (remaining === 0) window.location.reload();
+    };
+    refresh();
+    setInterval(refresh, 1000);
+  })();
+</script>
+<!-- <h1>Seats for {{theater.name}} - {{theater.movie.name}}</h1>
+{% if error %}
+<p style="color:red;">{{error}}</p>
+{% endif %}
+<form method="POST">
+    {% csrf_token %}
+    <ul>
+        {% for seat in seats %}
+        <li>
+          Seats{{seat.seat_number}}:
+          {% if seat.is_booked %}
+          <strong>Booked seat {{seat.seat_number}}</strong>
+          {% else %}
+          <input type="checkbox" name="seats" value="{{seat.id}}">
+          <strong>Available seat {{seat.seat_number}}</strong>
+          {% endif%}
+        </li>
+        {% endfor %}
+      </ul>
+      <button type="submit">Book selected seats</button>
+</form> -->
+
+{% endblock %}

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}BookMySeat{% endblock %}</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+    />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f8f9fa;
+      }
+      .navbar {
+        background-color: #263238 !important;
+        padding: 10px 20px;
+      }
+      .navbar-brand img {
+        height: 40px;
+      }
+      .navbar-nav .nav-link {
+        color: #d5dde0;
+      }
+      .navbar-nav .nav-link:hover {
+        color: #fff;
+      }
+      .navbar-toggler {
+        border: 2px solid #d9a441;
+        border-radius: 4px;
+        padding: 7px 11px;
+      }
+      .navbar-toggler:focus {
+        outline: none;
+      }
+      .navbar-toggler-icon {
+        display: block;
+        width: 22px;
+        height: 16px;
+        background-image: linear-gradient(
+            #d9a441,
+            #d9a441
+          ),
+          linear-gradient(#d9a441, #d9a441),
+          linear-gradient(#d9a441, #d9a441);
+        background-position: 0 0, 0 7px, 0 14px;
+        background-repeat: no-repeat;
+        background-size: 100% 2px;
+      }
+      @media (max-width: 991.98px) {
+        .navbar .container {
+          align-items: flex-start;
+        }
+        .navbar-toggler {
+          margin-top: 4px;
+        }
+        .navbar-collapse {
+          width: 100%;
+        }
+        .navbar-nav {
+          padding-top: 8px;
+        }
+        .navbar-nav .nav-link {
+          padding: 8px 0;
+        }
+      }
+      .banner {
+        background-color: #f8f9fa;
+        padding: 20px;
+        text-align: center;
+      }
+      .banner img {
+        max-width: 100%;
+        height: auto;
+      }
+      .section-title {
+        font-size: 24px;
+        font-weight: bold;
+        margin: 20px 0;
+      }
+      .card img {
+        height: 200px;
+        object-fit: cover;
+      }
+      .footer {
+        background-color: #343a40;
+        color: #f8f9fa;
+        padding: 20px 0;
+      }
+      .footer a {
+        color: #f8f9fa;
+        text-decoration: none;
+      }
+      .footer a:hover {
+        text-decoration: underline;
+      }
+      .footer .social-icons i {
+        font-size: 24px;
+        margin: 0 10px;
+        transition: color 0.3s;
+      }
+      .footer .social-icons i:hover {
+        color: #28a745;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container">
+        <a class="navbar-brand font-weight-bold" href="/" style="color: #d9a441; font-size: 1.5rem;">
+          <i class="fas fa-film mr-2"></i>BookMySeat
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-toggle="collapse"
+          data-target="#navbarNav"
+          aria-controls="navbarNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ml-auto">
+            {% if user.is_authenticated %}
+            <li class="nav-item">
+              <a class="nav-link" href="/">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/movies/">Movies</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'profile' %}">Profile</a>
+            </li>
+            {% if user.is_staff %}
+            <li class="nav-item">
+              <a class="nav-link text-warning font-weight-bold" href="{% url 'custom_admin_dashboard' %}"><i class="fas fa-tools"></i> Admin Panel</a>
+            </li>
+            {% endif %}
+            <li class="nav-item">
+              <form method="Post" action="{% url 'logout' %}" class="d-inline">
+                {% csrf_token %}
+                <button
+                  type="submit"
+                  class="nav-link"
+                  style="border: none; background: none; cursor: pointer;"
+                >
+                  Logout
+                </button>
+              </form>
+            </li>
+            {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'login' %}">Login</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'register' %}">Register</a>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container mt-4 mb-5">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm" role="alert">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        {% endfor %}
+      {% endif %}
+      {% block content %} {% endblock %}
+    </div>
+
+    <footer class="footer mt-5">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-4 mb-4 mb-md-0">
+            <h5>About Us</h5>
+            <p>
+              We provide the best movie experience in town. Book your tickets
+              now and enjoy the show!
+            </p>
+          </div>
+          <div class="col-md-4 mb-4 mb-md-0">
+            <h5>Quick Links</h5>
+            <ul class="list-unstyled">
+              <li><a href="/">Home</a></li>
+              <li><a href="/movies/">Movies</a></li>
+              <li><a href="{% url 'profile' %}">My Profile</a></li>
+            </ul>
+          </div>
+          <div class="col-md-4">
+            <h5>Follow Us</h5>
+            <div class="social-icons">
+              <a href="#"><i class="fab fa-facebook"></i></a>
+              <a href="#"><i class="fab fa-twitter"></i></a>
+              <a href="#"><i class="fab fa-instagram"></i></a>
+            </div>
+          </div>
+        </div>
+        <hr class="mt-4 mb-4" />
+        <div class="text-center">
+          <p>&copy; 2026 BookMySeat Cinema Booking. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+  </body>
+</html>
