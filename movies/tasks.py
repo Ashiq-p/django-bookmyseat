@@ -1,12 +1,14 @@
 from io import BytesIO
 import logging
+import base64
+import os
+import resend
 
 import qrcode
 from celery import shared_task
 from django.conf import settings
 from django.core import signing
 from django.core.files.base import ContentFile
-from django.core.mail import EmailMessage
 from django.urls import reverse
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -118,9 +120,32 @@ def generate_and_email_ticket(self, payment_id):
         f'Amount paid: {payment.currency} {payment.amount_rupees:,.2f}\n'
         f'Booked at: {timezone.localtime(booking.booked_at):%d %B %Y, %I:%M %p}'
     )
-    email = EmailMessage(f'Booking confirmed: {booking.movie.name}', body, settings.DEFAULT_FROM_EMAIL, [booking.user.email])
-    email.attach(f'bookmyseat-ticket-{booking.id}.pdf', pdf, 'application/pdf')
     try:
-        email.send(fail_silently=False)
+        resend.api_key = os.environ["RESEND_API_KEY"]
+
+        attachment = base64.b64encode(pdf).decode("utf-8")
+
+        params = {
+            "from": os.environ.get(
+                "RESEND_FROM_EMAIL",
+                "onboarding@resend.dev"
+            ),
+            "to": [booking.user.email],
+            "subject": f"Booking confirmed: {booking.movie.name}",
+            "text": body,
+            "attachments": [
+                {
+                    "content": attachment,
+                    "filename": f"bookmyseat-ticket-{booking.id}.pdf",
+                }
+            ],
+        }
+
+        resend.Emails.send(params)
+
     except Exception as exc:
-        raise self.retry(exc=exc, countdown=settings.TICKET_EMAIL_RETRY_DELAY, max_retries=settings.TICKET_EMAIL_MAX_RETRIES)
+        raise self.retry(
+            exc=exc,
+            countdown=settings.TICKET_EMAIL_RETRY_DELAY,
+            max_retries=settings.TICKET_EMAIL_MAX_RETRIES,
+        )
