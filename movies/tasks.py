@@ -2,7 +2,12 @@ from io import BytesIO
 import logging
 import base64
 import os
-import resend
+from brevo import Brevo
+from brevo.transactional_emails import (
+    SendTransacEmailRequestAttachmentItem,
+    SendTransacEmailRequestSender,
+    SendTransacEmailRequestToItem,
+)
 
 import qrcode
 from celery import shared_task
@@ -121,27 +126,21 @@ def generate_and_email_ticket(self, payment_id):
         f'Booked at: {timezone.localtime(booking.booked_at):%d %B %Y, %I:%M %p}'
     )
     try:
-        resend.api_key = os.environ["RESEND_API_KEY"]
-
+        client = Brevo(api_key=os.environ['BREVO_API_KEY'])
         attachment = base64.b64encode(pdf).decode("utf-8")
-
-        params = {
-            "from": os.environ.get(
-                "RESEND_FROM_EMAIL",
-                "onboarding@resend.dev"
+        client.transactional_emails.send_transac_email(
+            sender=SendTransacEmailRequestSender(
+                email=os.environ['BREVO_FROM_EMAIL'],
+                name=os.environ.get('BREVO_FROM_NAME', 'BookMySeat'),
             ),
-            "to": [booking.user.email],
-            "subject": f"Booking confirmed: {booking.movie.name}",
-            "text": body,
-            "attachments": [
-                {
-                    "content": attachment,
-                    "filename": f"bookmyseat-ticket-{booking.id}.pdf",
-                }
-            ],
-        }
-
-        resend.Emails.send(params)
+            to=[SendTransacEmailRequestToItem(email=booking.user.email)],
+            subject=f'Booking confirmed: {booking.movie.name}',
+            text_content=body,
+            attachment=[SendTransacEmailRequestAttachmentItem(
+                content=attachment,
+                name=f'bookmyseat-ticket-{booking.id}.pdf',
+            )],
+        )
 
     except Exception as exc:
         raise self.retry(
