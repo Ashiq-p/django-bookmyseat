@@ -90,17 +90,15 @@ WSGI_APPLICATION = 'bookmyseat.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-database_engine = os.environ.get('DJANGO_DB_ENGINE', 'django.db.backends.sqlite3')
-if database_engine == 'django.db.backends.postgresql':
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
     DATABASES = {
-        'default': {
-            'ENGINE': database_engine,
-            'NAME': os.environ.get('DJANGO_DB_NAME', ''),
-            'USER': os.environ.get('DJANGO_DB_USER', ''),
-            'PASSWORD': os.environ.get('DJANGO_DB_PASSWORD', ''),
-            'HOST': os.environ.get('DJANGO_DB_HOST', 'localhost'),
-            'PORT': os.environ.get('DJANGO_DB_PORT', '5432'),
-        }
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True,
+        )
     }
 else:
     DATABASES = {
@@ -109,8 +107,6 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-    DATABASES['default']= dj_database_url.parse('postgresql://django_bookmyseat_qroh_user:9ky95KwyKS4RqNl0Rf8qnwfegyXDbe2S@dpg-dai43fek1f9s73btm17g-a.oregon-postgres.render.com/django_bookmyseat_qroh')
-
 
 # Password validation
 # https://docs.djangoproject.com/en/6.1/ref/settings/#auth-password-validators
